@@ -37,6 +37,10 @@ def read_board():
 
 
 def create_card(card_name, column_name):
+
+    def create_trello_card(card_name, column):
+        requests.post(base_url.format("cards"), data={"name": card_name, "idList": column["id"], **auth_params})
+
     columns = get_board_columns()
     if not is_column_exist(column_name, columns):
         print(f"Sorry, there is no column named '{column_name}'")
@@ -70,6 +74,9 @@ def move_card(card_name, column_name):
                 return None
             return card_obj.trello_id
 
+    def move_trello_card(card_id, column):
+        requests.put(base_url.format("cards") + "/" + card_id + "/idList", data={"value": column["id"], **auth_params})
+
     columns = get_board_columns()
     if not is_column_exist(column_name, columns):
         print(f"Sorry, there is no column named '{column_name}'")  # код повторяется в двух местах (create card)
@@ -83,7 +90,7 @@ def move_card(card_name, column_name):
         return
     for column in columns:
         if column["name"] == column_name:
-            requests.put(base_url.format("cards") + "/" + card_id + "/idList", data={"value": column["id"], **auth_params})
+            move_trello_card(card_id, column)
             print(f"Card '{card_name}' has been moved to '{column_name}' column")
             break
 
@@ -113,10 +120,6 @@ def get_column_cards(column):
 
 def get_board_columns():
     return requests.get(base_url.format("boards") + "/" + board_id + "/lists", params=auth_params).json()
-
-
-def create_trello_card(card_name, column):
-    requests.post(base_url.format("cards"), data={"name": card_name, "idList": column["id"], **auth_params})
 
 
 if __name__ == "__main__":
