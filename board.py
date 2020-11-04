@@ -1,12 +1,12 @@
 import requests
 import sys
 
-auth_params = {
+AUTH_PARAMS = {
     "key": "65f4159f37b74da3921ca320f38d97c1",
     "token": "050f56c3607f6402e9a106f87d55392c1e12e0e931f087be65d42169aa680315"
 }
-board_id = "5f9844c16b5b362d8328c244"
-base_url = "https://api.trello.com/1/{}"
+BOARD_ID = "5f9844c16b5b362d8328c244"
+BASE_URL = "https://api.trello.com/1/{}"
 
 
 class Card():
@@ -17,6 +17,10 @@ class Card():
 
 def read_board():
     columns = get_board_columns()
+    print_columns_with_cards(columns)
+
+
+def print_columns_with_cards(columns):
     for column in columns:
         column_cards = get_column_cards(column)
         cards_qty = len(column_cards)
@@ -26,25 +30,25 @@ def read_board():
         if not column_cards:
             print("\t —")
             continue
+        print_cards(column_cards)
 
-        counter = 1
-        for card in column_cards:
-            card_number = str(counter)
-            card_name = card["name"]
-            card_id = card["id"]
-            print(f"\t {card_number}: {card_name}, id: {card_id}")
-            counter += 1
+
+def print_cards(column_cards):
+    counter = 1
+    for card in column_cards:
+        card_number = str(counter)
+        card_name = card["name"]
+        card_id = card["id"]
+        print(f"\t {card_number}: {card_name}, id: {card_id}")
+        counter += 1
 
 
 def create_card(card_name, column_name):
-
-    def create_trello_card(card_name, column):
-        requests.post(base_url.format("cards"), data={"name": card_name, "idList": column["id"], **auth_params})
-
     columns = get_board_columns()
     if not is_column_exist(column_name, columns):
         print(f"Sorry, there is no column named '{column_name}'")
         return
+
     for column in columns:
         if column["name"] == column_name:
             create_trello_card(card_name, column)
@@ -53,46 +57,51 @@ def create_card(card_name, column_name):
 
 
 def create_column(column_name):
-    requests.post(base_url.format("lists"), data={"name": column_name, "idBoard": board_id, "pos": "bottom", **auth_params})
+    create_trello_column(column_name)
     print(f"Column '{column_name}' has been created")
 
 
 def move_card(card_name, column_name):
-
-    def define_trello_card_id(filtered_cards):
-        if len(filtered_cards) == 1:
-            card = filtered_cards[1]
-            return card.trello_id
-        else:
-            print(f"There are several cards named '{card_name}':")
-            for counter, card in filtered_cards.items():
-                print(f"{counter}: {card_name}, column: {card.column}, id: {card.trello_id}")
-            card_number = int(input(f"Choose a card you want to move to the '{column_name}' column and type its number (for example, 1): "))
-            card_obj = filtered_cards.get(card_number)
-            if not card_obj:
-                print(f"Sorry, there is no card with number {card_number}")  # может, можно возвращать управление инпуту в цикле?
-                return None
-            return card_obj.trello_id
-
-    def move_trello_card(card_id, column):
-        requests.put(base_url.format("cards") + "/" + card_id + "/idList", data={"value": column["id"], **auth_params})
-
     columns = get_board_columns()
     if not is_column_exist(column_name, columns):
-        print(f"Sorry, there is no column named '{column_name}'")  # код повторяется в двух местах (create card)
+        print(f"Sorry, there is no column named '{column_name}'")
         return
+
     filtered_cards = find_cards(card_name, columns)
     if not filtered_cards:
         print(f"Sorry, there is no card named '{card_name}'")
         return
-    card_id = define_trello_card_id(filtered_cards)
+
+    card_id = define_trello_card_id(filtered_cards, card_name, column_name)
     if not card_id:
         return
+
     for column in columns:
         if column["name"] == column_name:
             move_trello_card(card_id, column)
             print(f"Card '{card_name}' has been moved to '{column_name}' column")
             break
+
+
+def define_trello_card_id(filtered_cards, card_name, column_name):
+    if len(filtered_cards) == 1:
+        card = filtered_cards[1]
+        return card.trello_id
+    else:
+        card_number = get_card_number_from_user(filtered_cards, card_name, column_name)
+        card_obj = filtered_cards.get(card_number)
+        if not card_obj:
+            print(f"Sorry, there is no card with number {card_number}")
+            return None
+        return card_obj.trello_id
+
+
+def get_card_number_from_user(filtered_cards, card_name, column_name):
+    print(f"There are several cards named '{card_name}':")
+    for counter, card in filtered_cards.items():
+        print(f"{counter}: {card_name}, column: {card.column}, id: {card.trello_id}")
+    card_number = int(input(f"Choose a card you want to move to the '{column_name}' column and type its number (for example, 1): "))
+    return card_number
 
 
 def find_cards(card_name, columns):
@@ -115,11 +124,28 @@ def is_column_exist(column_name, columns):
 
 
 def get_column_cards(column):
-    return requests.get(base_url.format("lists") + "/" + column["id"] + "/cards", params=auth_params).json()
+    req_url = BASE_URL.format("lists") + "/" + column["id"] + "/cards"
+    return requests.get(req_url, params=AUTH_PARAMS).json()
 
 
 def get_board_columns():
-    return requests.get(base_url.format("boards") + "/" + board_id + "/lists", params=auth_params).json()
+    req_url = BASE_URL.format("boards") + "/" + BOARD_ID + "/lists"
+    return requests.get(req_url, params=AUTH_PARAMS).json()
+
+
+def create_trello_card(card_name, column):
+    req_url = BASE_URL.format("cards")
+    requests.post(req_url, data={"name": card_name, "idList": column["id"], **AUTH_PARAMS})
+
+
+def create_trello_column(column_name):
+    req_url = BASE_URL.format("lists")
+    requests.post(req_url, data={"name": column_name, "idBoard": BOARD_ID, "pos": "bottom", **AUTH_PARAMS})
+
+
+def move_trello_card(card_id, column):
+    req_url = BASE_URL.format("cards") + "/" + card_id + "/idList"
+    requests.put(req_url, data={"value": column["id"], **AUTH_PARAMS})
 
 
 if __name__ == "__main__":
