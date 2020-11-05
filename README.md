@@ -1,6 +1,6 @@
 Приложение работает с Trello API.  
   
-**Для работы используйте свои token, key и board_id, полученные на https://trello.com/. Обратите внимание, что board_id должен быть полным, не коротким** (например, 5f9844c16b5b362d8328c244).  
+**Для работы используйте свои token, key и board_id, полученные на https://trello.com/. Обратите внимание, что board_id должен быть полным, не коротким** ([инструкция по получению](https://community.atlassian.com/t5/Trello-questions/How-to-get-Trello-Board-ID/qaq-p/1347525)).  
   
 Праметры находятся в начале файла `board.py`:
 ```
