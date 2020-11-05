@@ -2,10 +2,10 @@ import requests
 import sys
 
 AUTH_PARAMS = {
-    "key": "65f4159f37b74da3921ca320f38d97c1",
-    "token": "050f56c3607f6402e9a106f87d55392c1e12e0e931f087be65d42169aa680315"
+    "key": "..",
+    "token": ".."
 }
-BOARD_ID = "5f9844c16b5b362d8328c244"
+BOARD_ID = ".."
 BASE_URL = "https://api.trello.com/1/{}"
 
 
