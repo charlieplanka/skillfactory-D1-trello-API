@@ -101,8 +101,11 @@ def get_card_number_from_user(filtered_cards, card_name, column_name):
     print(f"There are several cards named '{card_name}':")
     for counter, card in filtered_cards.items():
         print(f"{counter}: {card_name}, column: {card.column}, id: {card.trello_id}")
-    card_number = int(input(f"Choose a card you want to move to the '{column_name}' column and type its number (for example, 1): "))
-    return card_number
+    card_number = input(f"Choose a card you want to move to the '{column_name}' column and type its number (for example, 1): ")
+    if not card_number:
+        print("You haven't typed any number")
+        sys.exit()
+    return int(card_number)
 
 
 def find_cards(card_name, columns):
