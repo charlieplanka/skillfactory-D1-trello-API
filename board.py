@@ -57,7 +57,8 @@ def create_card(card_name, column_name):
 
 
 def create_column(column_name):
-    create_trello_column(column_name)
+    full_board_id = get_full_board_id()
+    create_trello_column(column_name, full_board_id)
     print(f"Column '{column_name}' has been created")
 
 
@@ -123,6 +124,12 @@ def is_column_exist(column_name, columns):
     return False
 
 
+def get_full_board_id():
+    req_url = BASE_URL.format("boards") + "/" + BOARD_ID
+    board = requests.get(req_url, params=AUTH_PARAMS).json()
+    return board["id"]
+
+
 def get_column_cards(column):
     req_url = BASE_URL.format("lists") + "/" + column["id"] + "/cards"
     return requests.get(req_url, params=AUTH_PARAMS).json()
@@ -138,9 +145,9 @@ def create_trello_card(card_name, column):
     requests.post(req_url, data={"name": card_name, "idList": column["id"], **AUTH_PARAMS})
 
 
-def create_trello_column(column_name):
+def create_trello_column(column_name, board_id):
     req_url = BASE_URL.format("lists")
-    requests.post(req_url, data={"name": column_name, "idBoard": BOARD_ID, "pos": "bottom", **AUTH_PARAMS})
+    requests.post(req_url, data={"name": column_name, "idBoard": board_id, "pos": "bottom", **AUTH_PARAMS})
 
 
 def move_trello_card(card_id, column):
@@ -150,6 +157,7 @@ def move_trello_card(card_id, column):
 
 if __name__ == "__main__":
     if len(sys.argv) <= 2:
+        get_full_board_id()
         read_board()
     elif sys.argv[1] == "create_column":
         create_column(sys.argv[2])
@@ -159,3 +167,5 @@ if __name__ == "__main__":
         move_card(sys.argv[2], sys.argv[3])
     else:
         print("Unknown command. Please try 'create_column', 'create_card' or 'move_card'")
+
+
